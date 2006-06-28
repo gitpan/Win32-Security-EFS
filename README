@@ -33,6 +33,36 @@ DESCRIPTION
     decrypt($filename)
         The *decrypt* function decrypts an encrypted file or directory.
 
+    encryption_status($filename)
+        The *encryption_status* function retrieves the encryption status of
+        the specified file.
+
+        If the function succeeds, it will return one of the following values
+        see the "CONSTANTS" section.
+
+CONSTANTS
+        You can import all constants by importing Win32::Security::EFS like
+
+                use Win32::Security::EFS ':consts';
+        
+    * encryption_status constants
+
+        * *FILE_DIR_DISALLOWED:* Reserved for future use.
+        * *FILE_ENCRYPTABLE:* The file can be encrypted.
+        * *FILE_IS_ENCRYPTED:* The file is encrypted.
+        * *FILE_READ_ONLY:* The file is a read-only file.
+        * *FILE_ROOT_DIR:* The file is a root directory. Root directories
+        cannot be encrypted.
+        * *FILE_SYSTEM_ATTR:* The file is a system file. System files cannot
+        be encrypted.
+        * *FILE_SYSTEM_DIR:* The file is a system directory. System
+        directories cannot be encrypted.
+        * *FILE_SYSTEM_NOT_SUPPORT:* The file system does not support file
+        encryption.
+        * *FILE_UNKNOWN:* The encryption status is unknown. The file may be
+        encrypted.
+        * *FILE_USER_DISALLOWED:* Reserved for future use.
+
 AUTHOR
     Sascha Kiefer, esskar@cpan.org
 

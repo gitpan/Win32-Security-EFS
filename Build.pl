@@ -8,7 +8,7 @@ my $build = Module::Build->new(
     requires		=> {
         'Win32'			=> 0.2601,
         'Win32::API'	=> 0.41,
-        'File::Spec'	=> 3.12,
+        'File::Spec'	=> 3.12,        
     },
     reccomends => {
     },
