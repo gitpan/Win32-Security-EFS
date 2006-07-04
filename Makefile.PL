@@ -2,15 +2,14 @@
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
-          'PL_FILES' => {},
-          'INSTALLDIRS' => 'site',
           'NAME' => 'Win32::Security::EFS',
-          'EXE_FILES' => [],
           'VERSION_FROM' => 'lib/Win32/Security/EFS.pm',
           'PREREQ_PM' => {
-                           'File::Spec' => '3.12',
-                           'Win32::API' => '0.41',
-                           'Win32' => '0.2601'
-                         }
+                           'File::Spec' => '3.05',
+                           'Win32' => '0.24',
+                           'Win32::API' => '0.41'
+                         },
+          'INSTALLDIRS' => 'site',
+          'PL_FILES' => {}
         )
 ;

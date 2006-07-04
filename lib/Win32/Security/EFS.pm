@@ -30,10 +30,17 @@ my @constant_names = qw/
   FILE_DIR_DISALLOWED
   /;
 
+my %function_definitions = (
+    'EncryptFile'          => [ 'advapi32', 'P',  'I' ],
+    'DecryptFile'          => [ 'advapi32', 'PN', 'I' ],
+    'FileEncryptionStatus' => [ 'advapi32', 'PP', 'I' ],
+);
+
 use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
-$VERSION     = '0.06';
-@EXPORT_OK   = @constant_names;
-%EXPORT_TAGS = ( consts => [@constant_names], );
+$VERSION     = '0.07';
+@EXPORT_OK   = @constant_names, keys %function_definitions;
+%EXPORT_TAGS =
+  ( consts => [@constant_names], api => [ keys %function_definitions ] );
 
 use Win32::API ();
 use File::Spec ();
@@ -46,7 +53,7 @@ with EFS (Encrypted File System) under Windows plattforms.
 =head1 SYNOPSIS
 
 	use Win32::Security::EFS;
-	
+
 	if(Win32::Security::EFS->supported()) {
 		Win32::Security::EFS->encrypt('some/file');
 		Win32::Security::EFS->decrypt('some/file');
@@ -57,14 +64,14 @@ with EFS (Encrypted File System) under Windows plattforms.
 
 =head1 DESCRIPTION
 
-The Encrypted File System, or EFS, was introduced in version 5 of NTFS to 
-provide an additional level of security for files and directories. It 
-provides cryptographic protection of individual files on NTFS volumes 
-using a public-key system. Typically, the access control to file and 
-directory objects provided by the Windows security model is sufficient to 
-protect unauthorized access to sensitive information. However, if a laptop 
-containing sensitive data is lost or stolen, the security protection of 
-that data may be compromised. Encrypting the files increases security in 
+The Encrypted File System, or EFS, was introduced in version 5 of NTFS to
+provide an additional level of security for files and directories. It
+provides cryptographic protection of individual files on NTFS volumes
+using a public-key system. Typically, the access control to file and
+directory objects provided by the Windows security model is sufficient to
+protect unauthorized access to sensitive information. However, if a laptop
+containing sensitive data is lost or stolen, the security protection of
+that data may be compromised. Encrypting the files increases security in
 this scenario.
 
 =head2 METHODS
@@ -86,16 +93,14 @@ sub supported {
 
 =item B<encrypt($filename)>
 
-The I<encrypt> function encrypts a file or directory. All data streams in a file are encrypted. 
+The I<encrypt> function encrypts a file or directory. All data streams in a file are encrypted.
 All new files created in an encrypted directory are encrypted.
 
 =cut
 
 sub encrypt {
     my ( $self, $filename ) = @_;
-    my $func = import_api( 'advapi32', 'EncryptFile', 'P', 'I' );
-    die "Could not import API EncryptFile: $!" unless defined $func;
-    return $func->Call( File::Spec->canonpath($filename) );
+    return EncryptFile($filename);
 }
 
 =item B<decrypt($filename)>
@@ -106,9 +111,7 @@ The I<decrypt> function decrypts an encrypted file or directory.
 
 sub decrypt {
     my ( $self, $filename ) = @_;
-    my $func = import_api( 'advapi32', 'DecryptFile', 'PN', 'I' );
-    die "Could not import API DecryptFile: $!" unless defined $func;
-    return $func->Call( File::Spec->canonpath($filename), 0 );
+    return DecryptFile( $filename, 0 );
 }
 
 =item B<encryption_status($filename)>
@@ -117,15 +120,11 @@ The I<encryption_status> function retrieves the encryption status of the specifi
 
 If the function succeeds, it will return one of the following values see the L</CONSTANTS> section.
 
-=cut     
+=cut
 
 sub encryption_status {
     my ( $self, $filename ) = @_;
-    my $func = import_api( 'advapi32', 'FileEncryptionStatus', 'PP', 'I' );
-    die "Could not import API FileEncryptionStatus: $!" unless defined $func;
-
-    my $status = "\0" x 4;    # 4 == sizeof(DWORD)
-    my $result = $func->Call( File::Spec->canonpath($filename), $status );
+    my $result = FileEncryptionStatus( $filename, my $status );
     return $result ? unpack( "L*", $status ) : undef;
 }
 
@@ -133,14 +132,83 @@ sub encryption_status {
     my %api = ();
 
     sub import_api {
-        my ( $lib, $func, $params, $retval ) = @_;
-        my $key = join "_", map { uc } ( $lib, $func, $params, $retval );
+        my $func = shift;
+        my $def  = $function_definitions{$func}
+          or die "No definition found for API $func!";
+        my $key = join "_",
+          map { uc } ( $def->[0], $func, $def->[1], $def->[2] );
 
-        $api{$key} = Win32::API->new( $lib, $func, $params, $retval )
+        my $retval;
+        $retval = $api{$key} =
+          Win32::API->new( $def->[0], $func, $def->[1], $def->[2] )
           unless exists $api{$key};
 
-        return $api{$key};
+        die "Could not import API $func: $!" unless defined $retval;
+
+        return $retval;
     }
+}
+
+=back
+
+=head2 FUNCTIONS
+
+You have the possibility to access the plain API directly. Therefore the
+following functions can be exported:
+
+    use Win32::Security::EFS ':api';
+
+
+
+=over 4
+
+=item B<EncryptFile($filename)>
+
+    BOOL EncryptFile(
+        LPCTSTR lpFileName  // file name
+    );
+
+
+=cut
+
+sub EncryptFile {
+    my ($filename) = @_;
+    my $func = import_api('EncryptFile');
+    return $func->Call( File::Spec->canonpath($filename) );
+}
+
+=item B<DecryptFile($filename, $reserved)>
+
+    BOOL DecryptFile(
+        LPCTSTR lpFileName,  // file name
+        DWORD dwReserved     // reserved; must be zero
+    );
+
+
+=cut
+
+sub DecryptFile {
+    my ( $filename, $reserved ) = @_;
+    my $func = import_api('DecryptFile');
+    return $func->Call( File::Spec->canonpath($filename), $reserved );
+}
+
+=item B<FileEncryptionStatus($filename, $status)>
+
+    BOOL FileEncryptionStatus(
+        LPCTSTR lpFileName,  // file name
+        LPDWORD lpStatus     // encryption status
+    );
+
+
+=cut
+
+sub FileEncryptionStatus {
+    my ( $filename, $status ) = @_;
+
+    $status = "\0" x 4;    # 4 == sizeof(DWORD)
+    my $func = import_api('FileEncryptionStatus');
+    return $func->Call( File::Spec->canonpath($filename), $status );
 }
 
 =back
@@ -152,7 +220,7 @@ sub encryption_status {
 You can import all constants by importing Win32::Security::EFS like
 
 	use Win32::Security::EFS ':consts';
-	
+
 
 
 

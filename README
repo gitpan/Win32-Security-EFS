@@ -4,7 +4,7 @@ NAME
 
 SYNOPSIS
             use Win32::Security::EFS;
-        
+
             if(Win32::Security::EFS->supported()) {
                     Win32::Security::EFS->encrypt('some/file');
                     Win32::Security::EFS->decrypt('some/file');
@@ -40,11 +40,34 @@ DESCRIPTION
         If the function succeeds, it will return one of the following values
         see the "CONSTANTS" section.
 
+  FUNCTIONS
+    You have the possibility to access the plain API directly. Therefore the
+    following functions can be exported:
+
+        use Win32::Security::EFS ':api';
+
+    EncryptFile($filename)
+            BOOL EncryptFile(
+                LPCTSTR lpFileName  // file name
+            );
+
+    DecryptFile($filename, $reserved)
+            BOOL DecryptFile(
+                LPCTSTR lpFileName,  // file name
+                DWORD dwReserved     // reserved; must be zero
+            );
+
+    FileEncryptionStatus($filename, $status)
+            BOOL FileEncryptionStatus(
+                LPCTSTR lpFileName,  // file name
+                LPDWORD lpStatus     // encryption status
+            );
+
 CONSTANTS
         You can import all constants by importing Win32::Security::EFS like
 
                 use Win32::Security::EFS ':consts';
-        
+
     * encryption_status constants
 
         * *FILE_DIR_DISALLOWED:* Reserved for future use.

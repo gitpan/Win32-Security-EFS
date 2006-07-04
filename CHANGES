@@ -1,5 +1,10 @@
 Revision history for Perl extension Win32::Security::EFS
 
+0.07  Tue Jul 04 02:15:10 2006
+    - .tar.gz archive fixed
+    - plain API function added
+    - internal changes
+
 0.06  Wed Jun 28 17:20:00 2006
 	- function encryption_status added
 	- encryption_status CONSTANTS defined and are exportable

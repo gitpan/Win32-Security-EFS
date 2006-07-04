@@ -1,21 +1,18 @@
 ---
 name: Win32-Security-EFS
-version: 0.06
+version: 0.07
 author:
   - 'Sascha Kiefer, L<esskar@cpan.org>'
-abstract: "Perl interface to functions that assist in working\nwith EFS (Encrypted File System) under Windows plattforms."
+abstract: |-
+  Perl interface to functions that assist in working
+  with EFS (Encrypted File System) under Windows plattforms.
 license: perl
 requires:
-  File::Spec: 3.12
-  Win32: 0.2601
+  File::Spec: 3.05
+  Win32: 0.24
   Win32::API: 0.41
-generated_by: Module::Build version 0.2801
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
 provides:
   Win32::Security::EFS:
     file: lib/Win32/Security/EFS.pm
-    version: 0.06
-resources:
-  license: http://dev.perl.org/licenses/
+    version: 0.07
+generated_by: Module::Build version 0.2611
