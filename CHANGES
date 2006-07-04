@@ -1,5 +1,8 @@
 Revision history for Perl extension Win32::Security::EFS
 
+0.08  Tue Jul 04 04:37:10 2006
+    - XS support prepared
+
 0.07  Tue Jul 04 02:15:10 2006
     - .tar.gz archive fixed
     - plain API function added

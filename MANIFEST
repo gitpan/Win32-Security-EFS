@@ -1,11 +1,14 @@
 Build.pl
 CHANGES
 lib/Win32/Security/EFS.pm
-Makefile.PL
+lib/Win32/Security/EFS.xs
+lib/Win32/Security/ppport.h
+lib/Win32/Security/typemap
 MANIFEST			This list of files
-META.yml
-README
 t/01use.t
 t/02pod.t
 t/03podcoverage.t
 t/04basic.t
+META.yml
+Makefile.PL
+README

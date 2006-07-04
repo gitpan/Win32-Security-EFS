@@ -2,7 +2,7 @@ package Win32::Security::EFS;
 
 use strict;
 use warnings;
-use Exporter 'import';
+use base qw/Exporter DynaLoader/;
 
 use constant {
     FILE_ENCRYPTABLE        => 0,
@@ -31,16 +31,23 @@ my @constant_names = qw/
   /;
 
 my %function_definitions = (
-    'EncryptFile'          => [ 'advapi32', 'P',  'I' ],
-    'DecryptFile'          => [ 'advapi32', 'PN', 'I' ],
-    'FileEncryptionStatus' => [ 'advapi32', 'PP', 'I' ],
+    EncryptFile          => [ 'advapi32', 'P',  'I' ],
+    DecryptFile          => [ 'advapi32', 'PN', 'I' ],
+    FileEncryptionStatus => [ 'advapi32', 'PP', 'I' ],
 );
 
+my @xs_function_names = qw/
+  QueryUsersOnEncryptedFile
+  /;
+
 use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
-$VERSION     = '0.07';
-@EXPORT_OK   = @constant_names, keys %function_definitions;
+$VERSION     = '0.08';
+@EXPORT_OK   = @constant_names, keys %function_definitions, @xs_function_names;
 %EXPORT_TAGS =
-  ( consts => [@constant_names], api => [ keys %function_definitions ] );
+  ( consts => [@constant_names], api => [ keys %function_definitions, @xs_function_names ] );
+
+require XSLoader;
+XSLoader::load('Win32::Security::EFS', $VERSION);
 
 use Win32::API ();
 use File::Spec ();

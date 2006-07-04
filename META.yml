@@ -1,6 +1,6 @@
 ---
 name: Win32-Security-EFS
-version: 0.07
+version: 0.08
 author:
   - 'Sascha Kiefer, L<esskar@cpan.org>'
 abstract: |-
@@ -9,10 +9,11 @@ abstract: |-
 license: perl
 requires:
   File::Spec: 3.05
+  Module::Build: 0.2
   Win32: 0.24
   Win32::API: 0.41
 provides:
   Win32::Security::EFS:
     file: lib/Win32/Security/EFS.pm
-    version: 0.07
+    version: 0.08
 generated_by: Module::Build version 0.2611
