@@ -3,6 +3,8 @@ package Win32::Security::EFS;
 use strict;
 use warnings;
 use base qw/Exporter DynaLoader Win32::API::Interface/;
+use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
+$VERSION = '0.10';
 
 use constant {
     FILE_ENCRYPTABLE        => 0,
@@ -70,9 +72,6 @@ my @xs_function_names = qw/
   QueryUsersOnEncryptedFile
   /;
 
-
-use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
-$VERSION     = '0.09';
 @EXPORT_OK   = ( @constant_names, @pm_function_names, @xs_function_names );
 %EXPORT_TAGS = (
     consts => [@constant_names],
@@ -200,18 +199,19 @@ following functions can be exported:
         LPDWORD lpStatus     // encryption status
     );
 
+=item B<QueryUsersOnEncryptedFile( ... )>
+
+Not yet implemented.
+
 =back
 
 =head1 CONSTANTS
-
-=over 4
 
 You can import all constants by importing Win32::Security::EFS like
 
 	use Win32::Security::EFS ':consts';
 
-
-
+=over 4
 
 =item *
 encryption_status constants

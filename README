@@ -63,10 +63,13 @@ DESCRIPTION
                 LPDWORD lpStatus     // encryption status
             );
 
-CONSTANTS
-        You can import all constants by importing Win32::Security::EFS like
+    QueryUsersOnEncryptedFile( ... )
+        Not yet implemented.
 
-                use Win32::Security::EFS ':consts';
+CONSTANTS
+    You can import all constants by importing Win32::Security::EFS like
+
+            use Win32::Security::EFS ':consts';
 
     * encryption_status constants
 

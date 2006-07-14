@@ -1,6 +1,6 @@
 ---
 name: Win32-Security-EFS
-version: 0.09
+version: 0.10
 author:
   - 'Sascha Kiefer, L<esskar@cpan.org>'
 abstract: |-
@@ -11,9 +11,9 @@ requires:
   File::Spec: 3.05
   Module::Build: 0.2
   Win32: 0.24
-  Win32::API::Interface: 0.000105
+  Win32::API::Interface: 0.01
 provides:
   Win32::Security::EFS:
     file: lib/Win32/Security/EFS.pm
-    version: 0.09
+    version: 0.10
 generated_by: Module::Build version 0.2611
