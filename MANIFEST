@@ -2,7 +2,6 @@ Build.pl
 CHANGES
 lib/Win32/Security/EFS.pm
 lib/Win32/Security/EFS.xs
-lib/Win32/Security/ppport.h
 lib/Win32/Security/typemap
 MANIFEST			This list of files
 t/01use.t

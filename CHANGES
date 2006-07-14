@@ -1,5 +1,8 @@
 Revision history for Perl extension Win32::Security::EFS
 
+0.09  Fri Jul 14 02:40:56 2006
+    - use of Win32::API::Interface
+
 0.08  Tue Jul 04 04:37:10 2006
     - XS support prepared
 

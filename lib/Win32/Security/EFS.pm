@@ -2,7 +2,7 @@ package Win32::Security::EFS;
 
 use strict;
 use warnings;
-use base qw/Exporter DynaLoader/;
+use base qw/Exporter DynaLoader Win32::API::Interface/;
 
 use constant {
     FILE_ENCRYPTABLE        => 0,
@@ -30,26 +30,58 @@ my @constant_names = qw/
   FILE_DIR_DISALLOWED
   /;
 
-my %function_definitions = (
-    EncryptFile          => [ 'advapi32', 'P',  'I' ],
-    DecryptFile          => [ 'advapi32', 'PN', 'I' ],
-    FileEncryptionStatus => [ 'advapi32', 'PP', 'I' ],
+__PACKAGE__->generate(
+    {
+        'advapi32' => [
+            [
+                'EncryptFile',
+                'P', 'I', '',
+                sub {
+                    my ( $self, $filename ) = @_;
+                    return $self->Call( File::Spec->canonpath($filename) );
+                  }
+            ],
+            [
+                'DecryptFile',
+                'PN', 'I', '',
+                sub {
+                    my ( $self, $filename, $reserved ) = @_;
+                    return $self->Call( File::Spec->canonpath($filename),
+                        $reserved );
+                  }
+            ],
+            [
+                'FileEncryptionStatus',
+                'PP', 'I', '',
+                sub {
+                    my ( $self, $filename, $status ) = @_;
+                    $status = "\0" x 4;
+                    return $self->Call( File::Spec->canonpath($filename),
+                        $status );
+                },
+            ],
+        ],
+    }
 );
+
+my @pm_function_names = __PACKAGE__->generated;
 
 my @xs_function_names = qw/
   QueryUsersOnEncryptedFile
   /;
 
+
 use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
-$VERSION     = '0.08';
-@EXPORT_OK   = @constant_names, keys %function_definitions, @xs_function_names;
-%EXPORT_TAGS =
-  ( consts => [@constant_names], api => [ keys %function_definitions, @xs_function_names ] );
+$VERSION     = '0.09';
+@EXPORT_OK   = ( @constant_names, @pm_function_names, @xs_function_names );
+%EXPORT_TAGS = (
+    consts => [@constant_names],
+    api    => [ @pm_function_names, @xs_function_names ]
+);
 
 require XSLoader;
-XSLoader::load('Win32::Security::EFS', $VERSION);
+XSLoader::load( 'Win32::Security::EFS', $VERSION );
 
-use Win32::API ();
 use File::Spec ();
 
 =head1 NAME
@@ -107,7 +139,7 @@ All new files created in an encrypted directory are encrypted.
 
 sub encrypt {
     my ( $self, $filename ) = @_;
-    return EncryptFile($filename);
+    return $self->EncryptFile($filename);
 }
 
 =item B<decrypt($filename)>
@@ -118,7 +150,7 @@ The I<decrypt> function decrypts an encrypted file or directory.
 
 sub decrypt {
     my ( $self, $filename ) = @_;
-    return DecryptFile( $filename, 0 );
+    return $self->DecryptFile( $filename, 0 );
 }
 
 =item B<encryption_status($filename)>
@@ -131,29 +163,8 @@ If the function succeeds, it will return one of the following values see the L</
 
 sub encryption_status {
     my ( $self, $filename ) = @_;
-    my $result = FileEncryptionStatus( $filename, my $status );
+    my $result = $self->FileEncryptionStatus( $filename, my $status );
     return $result ? unpack( "L*", $status ) : undef;
-}
-
-{
-    my %api = ();
-
-    sub import_api {
-        my $func = shift;
-        my $def  = $function_definitions{$func}
-          or die "No definition found for API $func!";
-        my $key = join "_",
-          map { uc } ( $def->[0], $func, $def->[1], $def->[2] );
-
-        my $retval;
-        $retval = $api{$key} =
-          Win32::API->new( $def->[0], $func, $def->[1], $def->[2] )
-          unless exists $api{$key};
-
-        die "Could not import API $func: $!" unless defined $retval;
-
-        return $retval;
-    }
 }
 
 =back
@@ -175,15 +186,6 @@ following functions can be exported:
         LPCTSTR lpFileName  // file name
     );
 
-
-=cut
-
-sub EncryptFile {
-    my ($filename) = @_;
-    my $func = import_api('EncryptFile');
-    return $func->Call( File::Spec->canonpath($filename) );
-}
-
 =item B<DecryptFile($filename, $reserved)>
 
     BOOL DecryptFile(
@@ -191,32 +193,12 @@ sub EncryptFile {
         DWORD dwReserved     // reserved; must be zero
     );
 
-
-=cut
-
-sub DecryptFile {
-    my ( $filename, $reserved ) = @_;
-    my $func = import_api('DecryptFile');
-    return $func->Call( File::Spec->canonpath($filename), $reserved );
-}
-
 =item B<FileEncryptionStatus($filename, $status)>
 
     BOOL FileEncryptionStatus(
         LPCTSTR lpFileName,  // file name
         LPDWORD lpStatus     // encryption status
     );
-
-
-=cut
-
-sub FileEncryptionStatus {
-    my ( $filename, $status ) = @_;
-
-    $status = "\0" x 4;    # 4 == sizeof(DWORD)
-    my $func = import_api('FileEncryptionStatus');
-    return $func->Call( File::Spec->canonpath($filename), $status );
-}
 
 =back
 
