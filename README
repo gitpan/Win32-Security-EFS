@@ -25,6 +25,7 @@ DESCRIPTION
     supported()
         Returns *true* iff the underlaying filesystem supports EFS
 
+    constant_names()
     encrypt($filename)
         The *encrypt* function encrypts a file or directory. All data
         streams in a file are encrypted. All new files created in an
@@ -39,6 +40,16 @@ DESCRIPTION
 
         If the function succeeds, it will return one of the following values
         see the "CONSTANTS" section.
+
+    encryption_disable($dirpath)
+        The *encryption_disable* function disables encryption of the
+        specified directory and the files in it. It does not affect
+        encryption of subdirectories below the indicated directory.
+
+    encryption_enable($dirpath)
+        The *encryption_enable* function enables encryption of the specified
+        directory and the files in it. It does not affect encryption of
+        subdirectories below the indicated directory.
 
   FUNCTIONS
     You have the possibility to access the plain API directly. Therefore the
@@ -57,10 +68,16 @@ DESCRIPTION
                 DWORD dwReserved     // reserved; must be zero
             );
 
-    FileEncryptionStatus($filename, $status)
+    FileEncryptionStatus($filename, \$status)
             BOOL FileEncryptionStatus(
                 LPCTSTR lpFileName,  // file name
                 LPDWORD lpStatus     // encryption status
+            );
+
+    EncryptionDisable($filename, $disable)
+            BOOL EncryptionDisable(
+                LPCWSTR lpDirPath,
+                BOOL fDisable
             );
 
     QueryUsersOnEncryptedFile( ... )

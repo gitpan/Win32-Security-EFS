@@ -1,5 +1,10 @@
 Revision history for Perl extension Win32::Security::EFS
 
+0.11  Thu Aug 03 20:46:11 2006
+    - 0.09 and 0.10 are borked, so i fixed that
+    - internal changes (like removing XS, ...)
+    - added more functionalty and therefor more tests
+
 0.10  Fri Jul 15 15:21:26 2006
     - POD fixed
 

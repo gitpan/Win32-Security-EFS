@@ -6,6 +6,7 @@ my $build = Module::Build->new(
     license		=> 'perl',
     module_name		=> 'Win32::Security::EFS',
     requires		=> {
+        'Encode' => 0,
         'Win32'			=> 0.24,
         'Win32::API::Interface'	=> 0.01,
         'File::Spec'	=> 3.05,

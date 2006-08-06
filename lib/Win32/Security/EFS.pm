@@ -2,35 +2,31 @@ package Win32::Security::EFS;
 
 use strict;
 use warnings;
-use base qw/Exporter DynaLoader Win32::API::Interface/;
+
+use base qw/Exporter Win32::API::Interface/;
 use vars qw/$VERSION @EXPORT_OK %EXPORT_TAGS/;
-$VERSION = '0.10';
+$VERSION = '0.11';
 
-use constant {
-    FILE_ENCRYPTABLE        => 0,
-    FILE_IS_ENCRYPTED       => 1,
-    FILE_SYSTEM_ATTR        => 2,
-    FILE_ROOT_DIR           => 3,
-    FILE_SYSTEM_DIR         => 4,
-    FILE_UNKNOWN            => 5,
-    FILE_SYSTEM_NOT_SUPPORT => 6,
-    FILE_USER_DISALLOWED    => 7,
-    FILE_READ_ONLY          => 8,
-    FILE_DIR_DISALLOWED     => 9,
-};
+use File::Spec ();
 
-my @constant_names = qw/
-  FILE_ENCRYPTABLE
-  FILE_IS_ENCRYPTED
-  FILE_SYSTEM_ATTR
-  FILE_ROOT_DIR
-  FILE_SYSTEM_DIR
-  FILE_UNKNOWN
-  FILE_SYSTEM_NOT_SUPPORT
-  FILE_USER_DISALLOWED
-  FILE_READ_ONLY
-  FILE_DIR_DISALLOWED
-  /;
+my %consts;
+
+BEGIN {
+    %consts = (
+        FILE_ENCRYPTABLE        => 0,
+        FILE_IS_ENCRYPTED       => 1,
+        FILE_SYSTEM_ATTR        => 2,
+        FILE_ROOT_DIR           => 3,
+        FILE_SYSTEM_DIR         => 4,
+        FILE_UNKNOWN            => 5,
+        FILE_SYSTEM_NOT_SUPPORT => 6,
+        FILE_USER_DISALLOWED    => 7,
+        FILE_READ_ONLY          => 8,
+        FILE_DIR_DISALLOWED     => 9,
+    );
+}
+
+use constant \%consts;
 
 __PACKAGE__->generate(
     {
@@ -41,47 +37,68 @@ __PACKAGE__->generate(
                 sub {
                     my ( $self, $filename ) = @_;
                     return $self->Call( File::Spec->canonpath($filename) );
-                  }
+                },
             ],
             [
                 'DecryptFile',
-                'PN', 'I', '',
+                'PN',
+                'I',
+                '',
                 sub {
                     my ( $self, $filename, $reserved ) = @_;
                     return $self->Call( File::Spec->canonpath($filename),
                         $reserved );
-                  }
+                },
             ],
             [
                 'FileEncryptionStatus',
-                'PP', 'I', '',
+                'PP',
+                'I',
+                '',
                 sub {
-                    my ( $self, $filename, $status ) = @_;
-                    $status = "\0" x 4;
+                    my ( $self, $filename, $statusref ) = @_;
+                    $$statusref = "\0" x 4;
                     return $self->Call( File::Spec->canonpath($filename),
-                        $status );
+                        $$statusref );
+                },
+            ],
+            [
+                'EncryptionDisable',
+                'PI',
+                'I',
+                '',
+                sub {
+                    my ( $self, $filename, $disable ) = @_;
+                    return $self->Call( File::Spec->canonpath($filename),
+                        $disable );
+                },
+            ],
+            [
+                'QueryUsersOnEncryptedFile',
+                'PP',
+                'I',
+                '__QueryUsersOnEncryptedFile',
+                sub {
+                    my ( $self, $filename, $usersref ) = @_;
+
+                    my $users = pack("L", 0x0);
+                    my $retval =
+                      $self->Call(
+                        __make_unicode( File::Spec->canonpath($filename) ),
+                        $users );
+
+                    print STDERR "\nusers: ", unpack("PP", $users), "\n";
                 },
             ],
         ],
     }
 );
 
-my @pm_function_names = __PACKAGE__->generated;
-
-my @xs_function_names = qw/
-  QueryUsersOnEncryptedFile
-  /;
-
-@EXPORT_OK   = ( @constant_names, @pm_function_names, @xs_function_names );
 %EXPORT_TAGS = (
-    consts => [@constant_names],
-    api    => [ @pm_function_names, @xs_function_names ]
+    consts => [ __PACKAGE__->constant_names ],
+    api    => [ __PACKAGE__->generated ]
 );
-
-require XSLoader;
-XSLoader::load( 'Win32::Security::EFS', $VERSION );
-
-use File::Spec ();
+@EXPORT_OK = ( __PACKAGE__->constant_names, __PACKAGE__->generated );
 
 =head1 NAME
 
@@ -129,6 +146,14 @@ sub supported {
     return ( $flags & 0x00020000 ) > 0;
 }
 
+=item B<constant_names()>
+
+=cut
+
+sub constant_names {
+    return keys %consts;
+}
+
 =item B<encrypt($filename)>
 
 The I<encrypt> function encrypts a file or directory. All data streams in a file are encrypted.
@@ -162,8 +187,33 @@ If the function succeeds, it will return one of the following values see the L</
 
 sub encryption_status {
     my ( $self, $filename ) = @_;
-    my $result = $self->FileEncryptionStatus( $filename, my $status );
+    my $status;
+    my $result = $self->FileEncryptionStatus( $filename, \$status );
     return $result ? unpack( "L*", $status ) : undef;
+}
+
+=item B<encryption_disable($dirpath)>
+
+The I<encryption_disable> function disables encryption of the specified directory and the files in it.
+It does not affect encryption of subdirectories below the indicated directory.
+
+=cut
+
+sub encryption_disable {
+    my ( $self, $dirpath ) = @_;
+    return $self->EncryptionDisable( $dirpath, 1 );
+}
+
+=item B<encryption_enable($dirpath)>
+
+The I<encryption_enable> function enables encryption of the specified directory and the files in it.
+It does not affect encryption of subdirectories below the indicated directory.
+
+=cut
+
+sub encryption_enable {
+    my ( $self, $dirpath ) = @_;
+    return $self->EncryptionDisable( $dirpath, 0 );
 }
 
 =back
@@ -174,8 +224,6 @@ You have the possibility to access the plain API directly. Therefore the
 following functions can be exported:
 
     use Win32::Security::EFS ':api';
-
-
 
 =over 4
 
@@ -192,11 +240,18 @@ following functions can be exported:
         DWORD dwReserved     // reserved; must be zero
     );
 
-=item B<FileEncryptionStatus($filename, $status)>
+=item B<FileEncryptionStatus($filename, \$status)>
 
     BOOL FileEncryptionStatus(
         LPCTSTR lpFileName,  // file name
         LPDWORD lpStatus     // encryption status
+    );
+
+=item B<EncryptionDisable($filename, $disable)>
+
+    BOOL EncryptionDisable(
+        LPCWSTR lpDirPath,
+        BOOL fDisable
     );
 
 =item B<QueryUsersOnEncryptedFile( ... )>
@@ -274,5 +329,10 @@ This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
+
+sub __make_unicode {
+    require Encode;
+    return map { Encode::encode( 'UTF-16LE', $_, 1 ) } @_;
+}
 
 1;
